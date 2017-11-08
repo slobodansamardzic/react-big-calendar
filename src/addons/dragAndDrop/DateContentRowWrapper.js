@@ -48,17 +48,19 @@ class DateContentRowWrapper extends Component {
   _posEq = (a, b) => a.left === b.left && a.level === b.level;
 
   handleSegmentDrag = drag => {
-    this.setState({ drag });
+    // TODO: remove and create a CalendarWrapper and set the current drag pos
+    // there and also pass it to children via context
+    window.RBC_DRAG_POS = drag;
   };
 
   handleBackgroundCellHoverExit = () => {
     const props = withLevels(this.props);
-    this.setState({ ...props, drag: null });
+    //    this.setState({ ...props, drag: null });
   };
 
   handleSegmentHover = ({ position: hover, data: hoverData }, dragEvent) => {
     const { type: dragEventType, data: dragData, ...dragRest } = dragEvent;
-    let { drag } = this.state;
+    let drag = window.RBC_DRAG_POS;
     let { events } = this.props;
     if (!drag && dragEventType === 'outsideEvent') {
       // update position based on hover
@@ -118,9 +120,21 @@ class DateContentRowWrapper extends Component {
       return { ...seg, idx, isHidden: false };
     });
 
-    const [dseg] = cellSegs.splice(dlevel, 1);
-    cellSegs.splice(hlevel, 0, { ...dseg, isHidden: true });
-
+    //const [dseg] = cellSegs.splice(dlevel, 1);
+    //cellSegs.splice(hlevel, 0, { ...dseg, isHidden: true });
+    let { idx: didx, ...dseg } = cellSegs[dlevel],
+      { idx: hidx, ...hseg } = cellSegs[hlevel];
+    // swap idx
+    //dseg.idx = hseg.idx, hseg.idx = didx;
+    // swap events
+    //const tmpEvent = dseg.event;
+    //dseg.event = hseg.event, hseg.event = tmpEvent;
+    //cellSegs[dlevel].event = cellSegs[hlevel].event;
+    //cellSegs[hlevel].isHidden = true;
+    //cellSegs[hlevel] = tmp;
+    dseg.isHidden = true;
+    cellSegs[dlevel] = { idx: didx, ...hseg };
+    cellSegs[hlevel] = { idx: hidx, ...dseg, level: hlevel };
     // update cell segments
     cellSegs.forEach(({ idx, ...seg }, i) => {
       if (idx === -1) return;
@@ -129,13 +143,14 @@ class DateContentRowWrapper extends Component {
       seg.level = i;
       lvl[idx] = seg;
     });
-
-    this.setState({ levels, drag: { ...drag, level: hlevel }, hover, hoverData });
+    window.RBC_DRAG_POS = { ...drag, level: hlevel };
+    this.setState({ levels, hover, hoverData });
   };
 
   handleSegmentDrop = ({ level, left }) => {
-    const { drag, levels, hoverData } = this.state;
+    const { levels, hoverData } = this.state;
     const { onEventReorder } = this.context;
+    const drag = window.RBC_DRAG_POS;
 
     if (!hoverData) return;
 
@@ -154,7 +169,8 @@ class DateContentRowWrapper extends Component {
 
     // return draggedData, hoverData, idxa, idxb, segments
     onEventReorder && onEventReorder(dragData, hoverData, drag.level, level, events);
-    this.setState({ drag: null, hover: null, hoverData: null });
+    window.RBC_DRAG_POS = null;
+    this.setState({ hover: null, hoverData: null });
   };
 
   render() {

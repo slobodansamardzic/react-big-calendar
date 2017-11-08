@@ -34,46 +34,6 @@ export function getEventTimes(start, end, dropDate, type) {
 }
 
 class DraggableBackgroundWrapper extends React.Component {
-  // constructor(...args) {
-  //   super(...args);
-  //   this.state = { isOver: false };
-  // }
-  //
-  // componentWillMount() {
-  //   let monitor = this.context.dragDropManager.getMonitor()
-  //
-  //   this.monitor = monitor
-  //
-  //   this.unsubscribeToStateChange = monitor
-  //     .subscribeToStateChange(this.handleStateChange)
-  //
-  //   this.unsubscribeToOffsetChange = monitor
-  //     .subscribeToOffsetChange(this.handleOffsetChange)
-  // }
-  //
-  // componentWillUnmount() {
-  //   this.monitor = null
-  //   this.unsubscribeToStateChange()
-  //   this.unsubscribeToOffsetChange()
-  // }
-  //
-  // handleStateChange = () => {
-  //   const event = this.monitor.getItem();
-  //   if (!event && this.state.isOver) {
-  //     this.setState({ isOver: false });
-  //   }
-  // }
-  //
-  // handleOffsetChange = () => {
-  //   const { value } = this.props;
-  //   const { start, end } = this.monitor.getItem();
-  //
-  //   const isOver = dates.inRange(value, start, end, 'minute');
-  //   if (this.state.isOver !== isOver) {
-  //     this.setState({ isOver });
-  //   }
-  // };
-
   static propTypes = {
     connectDropTarget: PropTypes.func.isRequired,
     type: PropTypes.string,
@@ -129,7 +89,7 @@ function createWrapper(type) {
     return {
       type,
       connectDropTarget: connect.dropTarget(),
-      isOver: monitor.isOver(),
+      isOver: monitor.isOver({ shallow: true }),
     };
   }
 
@@ -175,13 +135,6 @@ function createWrapper(type) {
             return;
           }
         }
-
-        // Catch All
-        onEventResize('drop', {
-          event,
-          start,
-          end: value,
-        });
       }
     },
     hover(_, monitor, { props, context }) {
@@ -200,10 +153,10 @@ function createWrapper(type) {
         if (itemType === ItemTypes.RESIZE) {
           switch (eventType) {
             case 'resizeL': {
-              return onEventResize('hover', { event, start: value, end });
+              return onEventResize('drop', { event, start: value, end });
             }
             case 'resizeR': {
-              return onEventResize('hover', { event, start, end: value });
+              return onEventResize('drop', { event, start, end: value });
             }
             default: {
               return;
