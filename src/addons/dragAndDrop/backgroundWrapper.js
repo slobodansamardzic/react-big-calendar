@@ -138,29 +138,31 @@ function createWrapper(type) {
       }
     },
     hover(_, monitor, { props, context }) {
+      const { value } = props;
+      if (window.RBC_RESIZE_VALUE && window.RBC_RESIZE_VALUE.toString() === value.toString()) {
+        return;
+      }
       const itemType = monitor.getItemType();
       const { data: event, type: eventType } = monitor.getItem();
-      const { value } = props;
       const { onEventResize, startAccessor, endAccessor } = context;
       const start = get(event, startAccessor);
       const end = get(event, endAccessor);
-
+      //console.log('inside hover', itemType, eventType, monitor.getItem(), props);
       // This is to prevent calling hover too many times when the hover value does not change - AR 2017-11-07
       // Got this idea from AgamlaRage per https://git.io/vFBwc
-      if (!window.RBC_RESIZE_VALUE || window.RBC_RESIZE_VALUE.toString() !== value.toString()) {
-        window.RBC_RESIZE_VALUE = value;
 
-        if (itemType === ItemTypes.RESIZE) {
-          switch (eventType) {
-            case 'resizeL': {
-              return onEventResize('drop', { event, start: value, end });
-            }
-            case 'resizeR': {
-              return onEventResize('drop', { event, start, end: value });
-            }
-            default: {
-              return;
-            }
+      window.RBC_RESIZE_VALUE = value;
+      console.log('inside hover', itemType);
+      if (itemType === ItemTypes.RESIZE) {
+        switch (eventType) {
+          case 'resizeL': {
+            return onEventResize('drop', { event, start: value, end });
+          }
+          case 'resizeR': {
+            return onEventResize('drop', { event, start, end: value });
+          }
+          default: {
+            return;
           }
         }
       }

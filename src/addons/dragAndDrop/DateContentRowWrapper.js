@@ -99,21 +99,24 @@ class DateContentRowWrapper extends Component {
       }
 
       dragPos.level = nextDragData.level;
+      window.RBC_DRAG_POS = dragPos;
       return this.setState(prev => ({
         ...levels,
-        drag: dragPos,
         insertedOutsideEvent: true,
       }));
     }
     if (this._posEq(drag, hover)) return;
 
-    const { level: dlevel, left: dleft } = drag;
+    const { level: dlevel, left: dleft, right: dright } = drag;
     const { level: hlevel, left: hleft } = hover;
     const { levels } = this.state;
 
     // flatten out segments in a single day cell
+    const overlappingSeg = ({ left, right }) => {
+      return left <= dleft && right >= dright;
+    };
     let cellSegs = levels.map(segs => {
-      const idx = findIndex(propEq('left', dleft))(segs);
+      const idx = findIndex(overlappingSeg)(segs);
       if (idx === -1) {
         return { idx };
       }
@@ -149,7 +152,7 @@ class DateContentRowWrapper extends Component {
     this.setState({ levels, hover, hoverData });
   };
 
-  handleSegmentDrop = ({ level, left }) => {
+  handleSegmentDrop = ({ level, left, right }) => {
     const { levels, hoverData } = this.state;
     const { onEventReorder } = this.context;
     const drag = window.RBC_DRAG_POS;
@@ -162,6 +165,9 @@ class DateContentRowWrapper extends Component {
       return;
     }
 
+    const overlappingSeg = ({ l, r }) => {
+      return l <= left && r >= right;
+    };
     const dragData = dragSeg.event;
     const events = levels.reduce((acc, row) => {
       const seg = row.find(({ left }) => drag.left === left);
