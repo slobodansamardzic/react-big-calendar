@@ -62,7 +62,8 @@ class DateContentRowWrapper extends Component {
     const { type: dragEventType, data: dragData, ...dragRest } = dragEvent;
     let drag = window.RBC_DRAG_POS;
     let { events } = this.props;
-    if (!drag && dragEventType === 'outsideEvent') {
+    const { insertedOutsideEvent } = this.state;
+    if (!insertedOutsideEvent && dragEventType === 'outsideEvent') {
       // update position based on hover
       const { position: { span } } = dragRest;
       const dragPos = { ...hover, span, level: hover.level + 1 };
@@ -101,9 +102,10 @@ class DateContentRowWrapper extends Component {
       return this.setState(prev => ({
         ...levels,
         drag: dragPos,
+        insertedOutsideEvent: true,
       }));
     }
-    if (this._posEq(drag, hover) || hover.left !== drag.left) return;
+    if (this._posEq(drag, hover)) return;
 
     const { level: dlevel, left: dleft } = drag;
     const { level: hlevel, left: hleft } = hover;
