@@ -3,6 +3,7 @@ import React, { Component } from 'react';
 import cuid from 'cuid';
 import propEq from 'ramda/src/propEq';
 import findIndex from 'ramda/src/findIndex';
+import splitAt from 'ramda/src/splitAt';
 import addDays from 'date-fns/add_days';
 
 import BigCalendar from '../../index';
@@ -13,6 +14,7 @@ class DateContentRowWrapper extends Component {
     drag: null,
     hover: null,
     hoverData: null,
+    hasExitedBackgroundCell: false,
   };
 
   static contextTypes = {
@@ -23,6 +25,7 @@ class DateContentRowWrapper extends Component {
     onSegmentDrag: PropTypes.func,
     onSegmentHover: PropTypes.func,
     onSegmentDrop: PropTypes.func,
+    onBackgroundCellEnter: PropTypes.func,
     onBackgroundCellHoverExit: PropTypes.func,
   };
 
@@ -31,6 +34,7 @@ class DateContentRowWrapper extends Component {
       onSegmentDrag: this.handleSegmentDrag,
       onSegmentHover: this.handleSegmentHover,
       onSegmentDrop: this.handleSegmentDrop,
+      onBackgroundCellEnter: this.handleBackgroundCellEnter,
       onBackgroundCellHoverExit: this.handleBackgroundCellHoverExit,
     };
   }
@@ -53,16 +57,21 @@ class DateContentRowWrapper extends Component {
     window.RBC_DRAG_POS = drag;
   };
 
+  handleBackgroundCellEnter = value => {
+    // NEEDED??
+  };
+
   handleBackgroundCellHoverExit = () => {
     const props = withLevels(this.props);
-    //    this.setState({ ...props, drag: null });
+    this.setState({ hasExitedBackgroundCell: true });
   };
 
   handleSegmentHover = ({ position: hover, data: hoverData }, dragEvent) => {
     const { type: dragEventType, data: dragData, ...dragRest } = dragEvent;
     let drag = window.RBC_DRAG_POS;
     let { events } = this.props;
-    const { insertedOutsideEvent } = this.state;
+    const { insertedOutsideEvent, hasExitedBackgroundCell } = this.state;
+
     if (!insertedOutsideEvent && dragEventType === 'outsideEvent') {
       // update position based on hover
       const { position: { span } } = dragRest;
@@ -70,9 +79,11 @@ class DateContentRowWrapper extends Component {
       const { id: eventTemplateId, eventTemplateId: id, ...dragDataRest } = dragData;
 
       // calculate start and end
+      const newId = cuid();
       const data = {
         ...dragDataRest,
-        id: cuid(),
+        id: newId,
+        key: newId,
         eventTemplateId,
         locked: false,
         start: hoverData.start,
@@ -105,15 +116,22 @@ class DateContentRowWrapper extends Component {
         insertedOutsideEvent: true,
       }));
     }
+
+    if (hasExitedBackgroundCell && drag) {
+      drag.level = hover.level + 1;
+      window.RBC_DRAG_POS = drag;
+      return this.setState({ hasExitedBackgroundCell: false });
+    }
+
     if (this._posEq(drag, hover)) return;
 
-    const { level: dlevel, left: dleft, right: dright } = drag;
-    const { level: hlevel, left: hleft } = hover;
+    const { level: dlevel, left: dleft, right: dright, span: dspan } = drag;
+    const { level: hlevel, left: hleft, right: hright, span: hspan } = hover;
     const { levels } = this.state;
 
     // flatten out segments in a single day cell
     const overlappingSeg = ({ left, right }) => {
-      return left <= dleft && right >= dright;
+      return right >= dleft && dright >= left;
     };
     let cellSegs = levels.map(segs => {
       const idx = findIndex(overlappingSeg)(segs);
@@ -125,31 +143,54 @@ class DateContentRowWrapper extends Component {
       return { ...seg, idx, isHidden: false };
     });
 
-    //const [dseg] = cellSegs.splice(dlevel, 1);
-    //cellSegs.splice(hlevel, 0, { ...dseg, isHidden: true });
     let { idx: didx, ...dseg } = cellSegs[dlevel],
       { idx: hidx, ...hseg } = cellSegs[hlevel];
-    // swap idx
-    //dseg.idx = hseg.idx, hseg.idx = didx;
+
     // swap events
-    //const tmpEvent = dseg.event;
-    //dseg.event = hseg.event, hseg.event = tmpEvent;
-    //cellSegs[dlevel].event = cellSegs[hlevel].event;
-    //cellSegs[hlevel].isHidden = true;
-    //cellSegs[hlevel] = tmp;
     dseg.isHidden = true;
     cellSegs[dlevel] = { idx: didx, ...hseg };
     cellSegs[hlevel] = { idx: hidx, ...dseg, level: hlevel };
+
     // update cell segments
+    let nextLevels = [];
+
+    // get overlapping and not overlapping segments ahead of time
+    const [overlapping, notOverlapping] = levels[hlevel].reduce(
+      (acc, seg) => {
+        const isOverlapping = overlappingSeg(seg);
+        const [a, b] = acc;
+        isOverlapping ? a.push(seg) : b.push(seg);
+        return acc;
+      },
+      [[], []],
+    );
+
     cellSegs.forEach(({ idx, ...seg }, i) => {
-      if (idx === -1) return;
+      if (idx === -1) {
+        nextLevels.push(levels[i]);
+        return;
+      }
 
       let lvl = levels[i];
       seg.level = i;
-      lvl[idx] = seg;
+      if (dspan > 1 && dlevel === i) {
+        lvl.splice(idx, 1);
+        const nextLvl = [...overlapping, ...lvl];
+        nextLevels.push(nextLvl);
+      } else if (dspan > 1 && hlevel === i) {
+        const [head, [_, ...tail]] = splitAt(lvl, hidx);
+        const nextLvl = [...head, seg, ...notOverlapping, ...tail];
+        nextLevels.push(nextLvl);
+      } else if (hspan > 1 && hlevel === i) {
+        nextLevels.push([seg]);
+      } else {
+        lvl[idx] = seg;
+        nextLevels.push(lvl);
+      }
     });
+
     window.RBC_DRAG_POS = { ...drag, level: hlevel };
-    this.setState({ levels, hover, hoverData });
+    this.setState({ levels: nextLevels, hover, hoverData });
   };
 
   handleSegmentDrop = ({ level, left, right }) => {

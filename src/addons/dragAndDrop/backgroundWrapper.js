@@ -46,6 +46,7 @@ class DraggableBackgroundWrapper extends React.Component {
     onEventReorder: PropTypes.func,
     onOutsideEventDrop: PropTypes.func,
     onBackgroundCellHoverExit: PropTypes.func,
+    onBackgroundCellEnter: PropTypes.func,
     dragDropManager: PropTypes.object,
     startAccessor: accessor,
     endAccessor: accessor,
@@ -55,13 +56,14 @@ class DraggableBackgroundWrapper extends React.Component {
     const { isOver: wasOver } = this.props;
     const { isOver } = nextProps;
     if (isOver && !wasOver) {
-      const { onEventResize, dragDropManager } = this.context;
+      const { onEventResize, dragDropManager, onBackgroundCellEnter } = this.context;
       const { value } = this.props;
       const monitor = dragDropManager.getMonitor();
       if (monitor.getItemType() === 'resize') {
         // This was causing me performance issues so I commented it out. Thoughts? - Adam Recvlohe Oct. 6 2017
         // onEventResize('drag', {event: monitor.getItem(), end: value});
       }
+      onBackgroundCellEnter(value);
     }
 
     if (!isOver && wasOver) {
@@ -139,6 +141,9 @@ function createWrapper(type) {
     },
     hover(_, monitor, { props, context }) {
       const { value } = props;
+
+      // This is to prevent calling hover too many times when the hover value does not change - AR 2017-11-07
+      // Got this idea from AgamlaRage per https://git.io/vFBwc
       if (window.RBC_RESIZE_VALUE && window.RBC_RESIZE_VALUE.toString() === value.toString()) {
         return;
       }
@@ -147,12 +152,8 @@ function createWrapper(type) {
       const { onEventResize, startAccessor, endAccessor } = context;
       const start = get(event, startAccessor);
       const end = get(event, endAccessor);
-      //console.log('inside hover', itemType, eventType, monitor.getItem(), props);
-      // This is to prevent calling hover too many times when the hover value does not change - AR 2017-11-07
-      // Got this idea from AgamlaRage per https://git.io/vFBwc
 
       window.RBC_RESIZE_VALUE = value;
-      console.log('inside hover', itemType);
       if (itemType === ItemTypes.RESIZE) {
         switch (eventType) {
           case 'resizeL': {
