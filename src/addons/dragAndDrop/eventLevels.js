@@ -77,12 +77,18 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
 
   // calculated overlapping
   const [overlapping, notOverlapping] = groupOverlapping(lvls[hlevel], dragSeg);
+  let remainder = null;
+  let processRemainder = false;
   for (let i = 0, len = lvls.length; i < len; i++) {
     let level = [].concat(lvls[i]);
     let lvlDiff = dlevel - hlevel;
 
     if (dlevel === i) {
-      if (dspan > 1) {
+      if (hspan > 1) {
+        const [over, notOver] = groupOverlapping(lvls[dlevel], hoverSeg);
+        level = [...notOver, { ...hoverSeg, event: hoverData }];
+        remainder = over.length ? over : null;
+      } else if (dspan > 1) {
         level.push(...overlapping, { ...hoverSeg, event: hoverData });
       } else if (/*dlevel < hlevel &&*/ Math.abs(lvlDiff) === 1) {
         // insert hover into current level
@@ -118,8 +124,25 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
     }*/
 
     if (level.length === 0) continue;
+
+    if (remainder) {
+      if (processRemainder) {
+        const [left, right] = calcRange(remainder);
+        const [over, notOver] = groupOverlapping(level, { left, right });
+        level = [...notOver, ...remainder];
+        processRemainder = false;
+        remainder = over.length ? over : null;
+      } else {
+        processRemainder = true;
+      }
+    }
+
     level.sort(segSorter);
     nextLevels.push(level);
+  }
+
+  if (remainder) {
+    nextLevels.push(remainder);
   }
 
   // update level prop
