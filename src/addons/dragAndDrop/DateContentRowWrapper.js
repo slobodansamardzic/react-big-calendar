@@ -171,12 +171,10 @@ class DateContentRowWrapper extends Component {
     }
 
     const dragData = dragSeg.event;
-    const events = levels.reduce((acc, row) => {
-      const seg = row.find(({ left }) => drag.left === left);
-      if (seg) acc.push(seg.event);
-      return acc;
-    }, []);
-
+    const events = levels.reduce(
+      (acc, row) => row.reduce((acc, { event }) => (acc.push(event), acc), acc),
+      [],
+    );
     // return draggedData, hoverData, idxa, idxb, segments
     onEventReorder && onEventReorder(dragData, hoverData, drag.level, level, events);
     window.RBC_DRAG_POS = null;
