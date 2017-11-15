@@ -146,7 +146,7 @@ class DateContentRowWrapper extends Component {
 
     // Since drag pos can shit horizontally as well as vertically, we need to
     // recalculate position not just swap level.
-    const _dleft = hleft === dleft ? dleft : hright - (dspan - 1);
+    const _dleft = hlevel !== dlevel ? dleft : hright - (dspan - 1);
     window.RBC_DRAG_POS = {
       left: _dleft,
       right: _dleft + (dspan - 1),

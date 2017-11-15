@@ -90,7 +90,7 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
     let level = [].concat(lvls[i]);
     let lvlDiff = dlevel - hlevel;
     if (dlevel === i) {
-      if (dleft !== hleft) {
+      if (dleft !== hleft && hlevel === dlevel) {
         // noop
       } else if (hspan > 1) {
         const [over, notOver] = groupOverlapping(lvls[dlevel], hoverSeg);

@@ -416,6 +416,27 @@ describe('Vertical reorder', () => {
       expect(nextLevels[4].length).toEqual(1);
       expect(nextLevels[4][0].event).toEqual(12);
     });
+    test('when dragging multi pan seg 0,1 to 1,1', () => {
+      const levels = [
+        [seg(2, 6, 5, 0, 1), seg(7, 7, 1, 0, 2)],
+        [seg(2, 2, 1, 1, 3), seg(4, 4, 1, 1, 4), seg(6, 6, 1, 1, 5), seg(7, 7, 1, 1, 6)],
+      ];
+      const drag = levels[0][0];
+      const hover = levels[1][2];
+      const nextLevels = reorderLevels(levels, drag, hover);
+
+      // level 0
+      expect(nextLevels[0].length).toEqual(4);
+      expect(nextLevels[0][0].event).toEqual(3);
+      expect(nextLevels[0][1].event).toEqual(4);
+      expect(nextLevels[0][2].event).toEqual(5);
+      expect(nextLevels[0][3].event).toEqual(2);
+
+      // level 1
+      expect(nextLevels[1].length).toEqual(2);
+      expect(nextLevels[1][0].event).toEqual(1);
+      expect(nextLevels[1][1].event).toEqual(6);
+    });
     /*test('bubble down', () => {
       const levels = [
         [seg(2, 2, 1, 0, 1)],
