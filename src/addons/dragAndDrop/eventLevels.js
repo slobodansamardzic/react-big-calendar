@@ -2,6 +2,7 @@ import findIndex from 'ramda/src/findIndex';
 import propEq from 'ramda/src/propEq';
 import clone from 'ramda/src/clone';
 import splitAt from 'ramda/src/splitAt';
+import isSameDay from 'date-fns/is_same_day';
 
 const findSeg = (level, left) => findIndex(propEq('left', left))(level);
 
@@ -51,25 +52,33 @@ const bubbleDownSeg = (levels, seg, startIdx = 0) => {
 
 const segSorter = ({ left: a }, { left: b }) => a - b;
 
-const newPos = ({ left, right }, span) => ({ left, right: left + span - 1, span });
+const newPos = ({ left }, span) => ({ left, right: left + span - 1, span });
 
 const newSeg = (seg, nextSeg, event) => ({ ...newPos(nextSeg, seg.span), event });
 
 const reorderLevels = (levels, dragItem, hoverItem) => {
+  console.log('reorderLevels', dragItem, hoverItem);
   let nextLevels = [];
   const lvls = [].concat(levels);
   const { level: dlevel, left: dleft, span: dspan } = dragItem;
-  const { level: hlevel, left: hleft, span: hspan } = hoverItem;
+  const { level: hlevel, left: hleft, right: hright, span: hspan } = hoverItem;
   const dragIdx = findSeg(lvls[dlevel], dleft);
   const hoverIdx = findSeg(lvls[hlevel], hleft);
   const { event: dragData, ...dragSeg } = lvls[dlevel][dragIdx];
   const { event: hoverData, ...hoverSeg } = lvls[hlevel][hoverIdx];
-
+  console.log('d', dlevel, dragIdx, 'h', hlevel, hoverIdx);
   // remove drag and hover items
   const _drag = [].concat(lvls[dlevel]);
   const _hover = [].concat(lvls[hlevel]);
-  _drag.splice(dragIdx, 1), _hover.splice(hoverIdx, 1);
-  (lvls[dlevel] = _drag), (lvls[hlevel] = _hover);
+  if (dlevel === hlevel) {
+    _drag.splice(dragIdx, 1);
+    const newHoverIdx = findSeg(_drag, hleft);
+    _drag.splice(newHoverIdx, 1);
+    lvls[dlevel] = [].concat(_drag);
+  } else {
+    _drag.splice(dragIdx, 1), _hover.splice(hoverIdx, 1);
+    (lvls[dlevel] = _drag), (lvls[hlevel] = _hover);
+  }
 
   if (dragIdx < 0 || hoverIdx < 0) {
     throw `unable to find ${dragIdx < 0 ? 'drag' : 'hover'} segment`;
@@ -82,9 +91,11 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   for (let i = 0, len = lvls.length; i < len; i++) {
     let level = [].concat(lvls[i]);
     let lvlDiff = dlevel - hlevel;
-
+    console.log(i, len, lvlDiff, hlevel, dlevel, level);
     if (dlevel === i) {
-      if (hspan > 1) {
+      if (dleft !== hleft) {
+        // noop
+      } else if (hspan > 1) {
         const [over, notOver] = groupOverlapping(lvls[dlevel], hoverSeg);
         level = [...notOver, { ...hoverSeg, event: hoverData }];
         remainder = over.length ? over : null;
@@ -93,13 +104,23 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
       } else if (/*dlevel < hlevel &&*/ Math.abs(lvlDiff) === 1) {
         // insert hover into current level
         level.push({ ...hoverSeg, event: hoverData });
+      } else if (dleft !== hleft) {
+        //level.push(newSeg(hoverSeg, dragSeg, hoverData));
+        console.log('horizontal swap');
       }
-    } else if (hlevel === i) {
+    }
+
+    if (hlevel === i) {
       if (dspan > 1) {
         level = [...notOverlapping, { ...dragSeg, event: dragData }];
       } else if (Math.abs(lvlDiff) === 1) {
         // insert drag into currect level
         /*hlevel > dlevel &&*/ level.push({ ...dragSeg, event: dragData });
+      } else if (dleft !== hleft) {
+        let leftOffset = hspan !== dspan ? hright - (dspan - 1) : hleft;
+        const nextSeg = newSeg(dragSeg, { left: leftOffset }, dragData);
+        level.push(nextSeg);
+        remainder = [{ ...hoverSeg, event: hoverData }];
       } else {
         if (dlevel < hlevel) {
           nextLevels.push([{ ...hoverSeg, event: hoverData }]);
@@ -130,8 +151,8 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
         const [left, right] = calcRange(remainder);
         const [over, notOver] = groupOverlapping(level, { left, right });
         level = [...notOver, ...remainder];
-        processRemainder = false;
-        remainder = over.length ? over : null;
+        //processRemainder = false;
+        remainder = over.length ? over : ((processRemainder = false), null);
       } else {
         processRemainder = true;
       }
@@ -149,6 +170,7 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   for (let i = 0, len = nextLevels.length; i < len; i++) {
     nextLevels[i] = nextLevels[i].map(seg => ({ ...seg, level: i }));
   }
+  console.log('end', nextLevels);
   return nextLevels;
 };
 

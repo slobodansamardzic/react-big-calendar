@@ -81,8 +81,9 @@ describe('Vertical reorder', () => {
       const levels = singleSpanSegsMultiplePerRow;
       const drag = levels[0][0];
       const hover = levels[3][2];
+      console.log('start lvls', levels);
       const nextLevels = reorderLevels(levels, drag, hover);
-
+      console.log(nextLevels);
       // level 0
       expect(nextLevels[0].length).toEqual(1);
       expect(nextLevels[0][0].event).toEqual(1);
@@ -99,15 +100,15 @@ describe('Vertical reorder', () => {
       expect(nextLevels[2][1].event).toEqual(6);
 
       // level 3
-      expect(nextLevels[3].length).toEqual(1);
-      expect(nextLevels[3][0].event).toEqual(9);
+      expect(nextLevels[3].length).toEqual(4);
+      expect(nextLevels[3][0].event).toEqual(7);
+      expect(nextLevels[3][1].event).toEqual(8);
+      expect(nextLevels[3][2].event).toEqual(0);
+      expect(nextLevels[3][3].event).toEqual(10);
 
       // level 4
-      expect(nextLevels[4].length).toEqual(4);
-      expect(nextLevels[4][0].event).toEqual(7);
-      expect(nextLevels[4][1].event).toEqual(8);
-      expect(nextLevels[4][2].event).toEqual(0);
-      expect(nextLevels[4][3].event).toEqual(10);
+      expect(nextLevels[4].length).toEqual(1);
+      expect(nextLevels[4][0].event).toEqual(9);
     });
     test('when dragging multi pan seg 0,1 to 1,1', () => {
       const levels = multiSpanSegs;
@@ -393,26 +394,29 @@ describe('Vertical reorder', () => {
       const hover = levels[0][1];
       const nextLevels = reorderLevels(levels, drag, hover);
       console.log(nextLevels);
-      expect(nextLevels.length).toEqual(4);
+      expect(nextLevels.length).toEqual(5);
       // level 0
-      expect(nextLevels[0].length).toEqual(2);
-      expect(nextLevels[0][0].event).toEqual(3);
-      expect(nextLevels[0][1].event).toEqual(1);
+      expect(nextLevels[0].length).toEqual(1);
+      expect(nextLevels[0][0].event).toEqual(1);
 
       // level 1
       expect(nextLevels[1].length).toEqual(2);
-      expect(nextLevels[1][0].event).toEqual(7);
+      expect(nextLevels[1][0].event).toEqual(3);
       expect(nextLevels[1][1].event).toEqual(2);
 
       // level 2
       expect(nextLevels[2].length).toEqual(2);
-      expect(nextLevels[2][0].event).toEqual(10);
+      expect(nextLevels[2][0].event).toEqual(7);
       expect(nextLevels[2][1].event).toEqual(4);
 
       // level 3
       expect(nextLevels[3].length).toEqual(2);
-      expect(nextLevels[3][0].event).toEqual(12);
+      expect(nextLevels[3][0].event).toEqual(10);
       expect(nextLevels[3][1].event).toEqual(8);
+
+      // level 4
+      expect(nextLevels[4].length).toEqual(1);
+      expect(nextLevels[4][0].event).toEqual(12);
     });
     /*test('bubble down', () => {
       const levels = [

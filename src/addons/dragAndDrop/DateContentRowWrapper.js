@@ -77,9 +77,7 @@ class DateContentRowWrapper extends Component {
     window.RBC_DRAG_POS = drag;
   };
 
-  handleBackgroundCellEnter = value => {
-    // NEEDED??
-  };
+  handleBackgroundCellEnter = value => {};
 
   handleBackgroundCellHoverExit = () => {
     const props = withLevels(this.props);
@@ -140,12 +138,12 @@ class DateContentRowWrapper extends Component {
       }));
     }
 
-    if (drag && this.hasExitedBackgroundCell) {
+    /*if (drag && this.hasExitedBackgroundCell) {
       drag.level = hover.level + 1;
       window.RBC_DRAG_POS = drag;
       this.hasExitedBackgroundCell = false;
       return;
-    }
+    }*/
 
     if (this._posEq(drag, hover)) return;
     if (this.nextHover && !this._posEq(hover, this.nextHover)) return;
@@ -154,8 +152,8 @@ class DateContentRowWrapper extends Component {
     const { level: dlevel, left: dleft, right: dright, span: dspan } = drag;
     const { level: hlevel, left: hleft, right: hright, span: hspan } = hover;
     const { levels } = this.state;
-
-    console.log('start levels', [].concat(levels));
+    //console.log(drag, hover);
+    //console.log('start levels', [].concat(levels));
     // flatten out segments in a single day cell
     /*const overlappingSeg = ({ left, right }) => {
       return right >= dleft && dright >= left;
@@ -241,10 +239,19 @@ class DateContentRowWrapper extends Component {
         nextLevels.push(lvl);
       }
     });*/
-
     const nextLevels = reorderLevels(levels, drag, hoverItem.position);
+
+    // Since drag pos can shit horizontally as well as vertically, we need to
+    // recalculate position not just swap level.
+    const _dleft = hleft === dleft ? dleft : hright - (dspan - 1);
+    window.RBC_DRAG_POS = {
+      left: _dleft,
+      right: _dleft + (dspan - 1),
+      span: dspan,
+      level: hlevel,
+    };
+
     this.setState({ levels: nextLevels, hover: { ...drag, level: hlevel }, hoverData });
-    window.RBC_DRAG_POS = { ...drag, level: hlevel };
   };
 
   handleSegmentDrop = ({ level, left, right }) => {
