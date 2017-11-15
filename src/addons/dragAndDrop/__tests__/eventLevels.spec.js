@@ -81,9 +81,8 @@ describe('Vertical reorder', () => {
       const levels = singleSpanSegsMultiplePerRow;
       const drag = levels[0][0];
       const hover = levels[3][2];
-      console.log('start lvls', levels);
       const nextLevels = reorderLevels(levels, drag, hover);
-      console.log(nextLevels);
+
       // level 0
       expect(nextLevels[0].length).toEqual(1);
       expect(nextLevels[0][0].event).toEqual(1);
@@ -393,7 +392,6 @@ describe('Vertical reorder', () => {
       const drag = levels[0][0];
       const hover = levels[0][1];
       const nextLevels = reorderLevels(levels, drag, hover);
-      console.log(nextLevels);
       expect(nextLevels.length).toEqual(5);
       // level 0
       expect(nextLevels[0].length).toEqual(1);
@@ -427,8 +425,6 @@ describe('Vertical reorder', () => {
       ];
 
       bubbleDownSeg(levels, seg(2, 2, 1, 4, 5), 1);
-
-      console.log('bubble', levels);
 
       expect(levels[0][0].event).toEqual(1);
       expect(levels[1][0].event).toEqual(5);

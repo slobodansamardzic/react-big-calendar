@@ -20,7 +20,6 @@ class DateContentRowWrapper extends Component {
 
     this.hasExitedBackgroundCell = false;
     this.ignoreHoverUpdates = false;
-    this.nextHover = null;
   }
 
   state = {
@@ -138,107 +137,11 @@ class DateContentRowWrapper extends Component {
       }));
     }
 
-    /*if (drag && this.hasExitedBackgroundCell) {
-      drag.level = hover.level + 1;
-      window.RBC_DRAG_POS = drag;
-      this.hasExitedBackgroundCell = false;
-      return;
-    }*/
-
     if (this._posEq(drag, hover)) return;
-    if (this.nextHover && !this._posEq(hover, this.nextHover)) return;
 
-    this.nextHover = null;
     const { level: dlevel, left: dleft, right: dright, span: dspan } = drag;
     const { level: hlevel, left: hleft, right: hright, span: hspan } = hover;
     const { levels } = this.state;
-    //console.log(drag, hover);
-    //console.log('start levels', [].concat(levels));
-    // flatten out segments in a single day cell
-    /*const overlappingSeg = ({ left, right }) => {
-      return right >= dleft && dright >= left;
-    };
-    let cellSegs = levels.map(segs => {
-      const idx = findIndex(overlappingSeg)(segs);
-      if (idx === -1) {
-        return { idx };
-      }
-
-      const seg = segs[idx];
-      return { ...seg, idx, isHidden: false };
-    });
-
-    let { idx: didx, ...dseg } = cellSegs[dlevel],
-      { idx: hidx, ...hseg } = cellSegs[hlevel];
-
-    // swap events
-    dseg.isHidden = true;
-    cellSegs[dlevel] = { idx: didx, ...hseg };
-    cellSegs[hlevel] = { idx: hidx, ...dseg, level: hlevel };
-
-    // update cell segments
-    let nextLevels = [];
-
-    // get overlapping and not overlapping segments ahead of time
-    const level = dspan > 1 ? hlevel : dlevel;
-    const [overlapping, notOverlapping] = levels[level].reduce(
-      (acc, seg) => {
-        const isOverlapping = overlappingSeg(seg);
-        const [a, b] = acc;
-        isOverlapping ? a.push(seg) : b.push(seg);
-        return acc;
-      },
-      [[], []],
-    );
-
-    console.log(overlapping, notOverlapping, cellSegs);
-
-    cellSegs.forEach(({ idx, ...seg }, i) => {
-      if (idx === -1) {
-        nextLevels.push(levels[i]);
-        return;
-      }
-
-      console.log('inside', i);
-
-      let lvl = levels[i];
-      seg.level = i;
-      if (dspan > 1 && dlevel === i) {
-        lvl.splice(idx, 1);
-        const nextLvl = [...overlapping, ...lvl];
-        nextLevels.push(nextLvl);
-      } else if (dspan > 1 && hlevel === i) {
-        //const [head, [_, ...tail]] = splitAt(hidx, lvl);
-        const nextLvl = [seg, ...notOverlapping].map(seg => ({ ...seg, level: i }));
-        nextLevels.push(nextLvl);
-      } else if (hspan > 1 && dlevel === i) {
-        const dlvl = levels[dlevel];
-        const [head, [_, ...tail]] = splitAt(didx, dlvl);
-        nextLevels.push([{ ...seg, level: i }]);
-        const nextlvl = [...head, ...tail];
-        if (nextlvl.length) nextLevels.push(nextlvl.map(seg => ({ ...seg, level: i })));
-        //nextLevels.push([seg]);
-        //nextLevels.push(lvl);
-        //lvl.splice(idx, 1);
-        //const nextLvl = [...overlapping, ...lvl];
-        console.log('d lvl', [].concat(nextLevels));
-      } else if (hspan > 1 && hlevel === i) {
-
-        //lvl.splice(idx, 1);
-        //const nextLvl = [seg, ...notOverlapping];
-        //nextLevels.push(nextLvl);
-        const [head, [_, ...tail]] = splitAt(hidx, lvl);
-        const nextLvl = [...head, seg, ...tail].map(seg => ({ ...seg, level: i }));
-
-
-        if (seg.event === dragData) console.log('level', i, 'data is the same');
-        nextLevels.push(nextLvl);
-        window.breakNextRender = true;
-      } else {
-        lvl[idx] = seg;
-        nextLevels.push(lvl);
-      }
-    });*/
     const nextLevels = reorderLevels(levels, drag, hoverItem.position);
 
     // Since drag pos can shit horizontally as well as vertically, we need to

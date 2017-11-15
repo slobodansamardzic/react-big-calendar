@@ -57,7 +57,6 @@ const newPos = ({ left }, span) => ({ left, right: left + span - 1, span });
 const newSeg = (seg, nextSeg, event) => ({ ...newPos(nextSeg, seg.span), event });
 
 const reorderLevels = (levels, dragItem, hoverItem) => {
-  console.log('reorderLevels', dragItem, hoverItem);
   let nextLevels = [];
   const lvls = [].concat(levels);
   const { level: dlevel, left: dleft, span: dspan } = dragItem;
@@ -66,7 +65,6 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   const hoverIdx = findSeg(lvls[hlevel], hleft);
   const { event: dragData, ...dragSeg } = lvls[dlevel][dragIdx];
   const { event: hoverData, ...hoverSeg } = lvls[hlevel][hoverIdx];
-  console.log('d', dlevel, dragIdx, 'h', hlevel, hoverIdx);
   // remove drag and hover items
   const _drag = [].concat(lvls[dlevel]);
   const _hover = [].concat(lvls[hlevel]);
@@ -91,7 +89,6 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   for (let i = 0, len = lvls.length; i < len; i++) {
     let level = [].concat(lvls[i]);
     let lvlDiff = dlevel - hlevel;
-    console.log(i, len, lvlDiff, hlevel, dlevel, level);
     if (dlevel === i) {
       if (dleft !== hleft) {
         // noop
@@ -104,9 +101,6 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
       } else if (/*dlevel < hlevel &&*/ Math.abs(lvlDiff) === 1) {
         // insert hover into current level
         level.push({ ...hoverSeg, event: hoverData });
-      } else if (dleft !== hleft) {
-        //level.push(newSeg(hoverSeg, dragSeg, hoverData));
-        console.log('horizontal swap');
       }
     }
 
@@ -170,7 +164,6 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   for (let i = 0, len = nextLevels.length; i < len; i++) {
     nextLevels[i] = nextLevels[i].map(seg => ({ ...seg, level: i }));
   }
-  console.log('end', nextLevels);
   return nextLevels;
 };
 
