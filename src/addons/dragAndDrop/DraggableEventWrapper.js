@@ -14,6 +14,10 @@ let eventSource = {
     onSegmentDrag(event.position);
     return event;
   },
+  endDrag(props, monitor, { context }) {
+    const { onSegmentDragEnd } = context;
+    onSegmentDragEnd();
+  },
 };
 
 const eventTarget = {
@@ -32,6 +36,7 @@ const eventTarget = {
 const contextTypes = {
   onEventReorder: PropTypes.func,
   onSegmentDrag: PropTypes.func,
+  onSegmentDragEnd: PropTypes.func,
   onSegmentDrop: PropTypes.func,
   onSegmentHover: PropTypes.func,
 };

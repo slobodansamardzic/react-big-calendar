@@ -63,8 +63,10 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   const { level: hlevel, left: hleft, right: hright, span: hspan } = hoverItem;
   const dragIdx = findSeg(lvls[dlevel], dleft);
   const hoverIdx = findSeg(lvls[hlevel], hleft);
+  // TODO: hoverIdx can be -1 when we are inserting into an empty day cell
   const { event: dragData, ...dragSeg } = lvls[dlevel][dragIdx];
   const { event: hoverData, ...hoverSeg } = lvls[hlevel][hoverIdx];
+
   // remove drag and hover items
   const _drag = [].concat(lvls[dlevel]);
   const _hover = [].concat(lvls[hlevel]);

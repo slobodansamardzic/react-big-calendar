@@ -63,7 +63,8 @@ class DraggableBackgroundWrapper extends React.Component {
         // This was causing me performance issues so I commented it out. Thoughts? - Adam Recvlohe Oct. 6 2017
         // onEventResize('drag', {event: monitor.getItem(), end: value});
       }
-      onBackgroundCellEnter(value);
+      console.log('before enter cb', monitor.getItem(), this.props);
+      onBackgroundCellEnter(value, monitor.getItem());
     }
   }
 
