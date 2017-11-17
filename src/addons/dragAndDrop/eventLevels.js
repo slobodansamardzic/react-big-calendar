@@ -57,19 +57,38 @@ const newPos = ({ left }, span) => ({ left, right: left + span - 1, span });
 const newSeg = (seg, nextSeg, event) => ({ ...newPos(nextSeg, seg.span), event });
 
 const reorderLevels = (levels, dragItem, hoverItem) => {
+  console.log('inside reorderLevels');
   let nextLevels = [];
   const lvls = [].concat(levels);
   const { level: dlevel, left: dleft, span: dspan } = dragItem;
   const { level: hlevel, left: hleft, right: hright, span: hspan } = hoverItem;
   const dragIdx = findSeg(lvls[dlevel], dleft);
   const hoverIdx = findSeg(lvls[hlevel], hleft);
-  // TODO: hoverIdx can be -1 when we are inserting into an empty day cell
+
+  // levels
+  const _drag = [].concat(lvls[dlevel]);
+  let _hover = [].concat(lvls[hlevel]);
+
+  // drag
   const { event: dragData, ...dragSeg } = lvls[dlevel][dragIdx];
+
+  // dragging to an empty cell
+  console.log(hoverIdx, _drag, dragSeg, hoverItem);
+  if (hoverIdx === -1 && dragData === hoverItem.event) {
+    _drag.splice(dragIdx, 1);
+    if (dlevel === hlevel) {
+      _hover = _drag;
+    }
+    console.log('h', _hover, 'd', _drag);
+    _hover.push({ ...hoverItem, event: dragData });
+    _hover.sort(segSorter);
+    (lvls[dlevel] = _drag), (lvls[hlevel] = _hover);
+    return lvls.map(lvl => [].concat(lvl));
+  }
+
   const { event: hoverData, ...hoverSeg } = lvls[hlevel][hoverIdx];
 
   // remove drag and hover items
-  const _drag = [].concat(lvls[dlevel]);
-  const _hover = [].concat(lvls[hlevel]);
   if (dlevel === hlevel) {
     _drag.splice(dragIdx, 1);
     const newHoverIdx = findSeg(_drag, hleft);

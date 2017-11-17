@@ -119,7 +119,7 @@ class DateContentRowWrapper extends Component {
           return;
         } else {
           console.log('reorder', drag, hover);
-          const nextLevels = reorderLevels(levels, drag, hover);
+          const nextLevels = reorderLevels(levels, drag, { ...hover, event: dragItem.data });
           const { level: hlevel, right: hright } = hover;
           const _dleft = hlevel !== dlevel ? dleft : hright - (dspan - 1);
           window.RBC_DRAG_POS = {
@@ -265,7 +265,7 @@ class DateContentRowWrapper extends Component {
       return this.setState(prev => ({ ...levels }));
     }
 
-    if (this._posEq(drag, hover)) return;
+    if (!drag || this._posEq(drag, hover)) return;
     console.log(drag, hover);
     const { level: dlevel, left: dleft, right: dright, span: dspan } = drag;
     const { level: hlevel, left: hleft, right: hright, span: hspan } = hover;
