@@ -69,17 +69,23 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   const _drag = [].concat(lvls[dlevel]);
   let _hover = [].concat(lvls[hlevel]);
 
+  // dragging from outside the cal
+  if (hoverIdx === -1 && dragIdx === -1) {
+    _drag.push(dragItem);
+    _drag.sort(segSorter);
+    lvls[dlevel] = _drag;
+    return lvls.map(lvl => [].concat(lvl));
+  }
+
   // drag
   const { event: dragData, ...dragSeg } = lvls[dlevel][dragIdx];
 
   // dragging to an empty cell
-  console.log(hoverIdx, _drag, dragSeg, hoverItem);
   if (hoverIdx === -1 && dragData === hoverItem.event) {
     _drag.splice(dragIdx, 1);
     if (dlevel === hlevel) {
       _hover = _drag;
     }
-    console.log('h', _hover, 'd', _drag);
     _hover.push({ ...hoverItem, event: dragData });
     _hover.sort(segSorter);
     (lvls[dlevel] = _drag), (lvls[hlevel] = _hover);
@@ -185,6 +191,7 @@ const reorderLevels = (levels, dragItem, hoverItem) => {
   for (let i = 0, len = nextLevels.length; i < len; i++) {
     nextLevels[i] = nextLevels[i].map(seg => ({ ...seg, level: i }));
   }
+  console.log('nn', nextLevels);
   return nextLevels;
 };
 

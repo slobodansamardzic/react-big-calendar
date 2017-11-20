@@ -54,17 +54,22 @@ class DraggableBackgroundWrapper extends React.Component {
 
   componentWillReceiveProps(nextProps) {
     const { isOver: wasOver } = this.props;
+    const { onEventResize, dragDropManager, onBackgroundCellEnter } = this.context;
     const { isOver } = nextProps;
+    const monitor = dragDropManager.getMonitor();
+    const { value } = this.props;
     if (isOver && !wasOver) {
-      const { onEventResize, dragDropManager, onBackgroundCellEnter } = this.context;
-      const { value } = this.props;
-      const monitor = dragDropManager.getMonitor();
       if (monitor.getItemType() === 'resize') {
         // This was causing me performance issues so I commented it out. Thoughts? - Adam Recvlohe Oct. 6 2017
         // onEventResize('drag', {event: monitor.getItem(), end: value});
       }
       console.log('before enter cb', monitor.getItem(), this.props);
       onBackgroundCellEnter(value, monitor.getItem());
+    }
+
+    if (!isOver && wasOver) {
+      const { onBackgroundCellHoverExit } = this.context;
+      onBackgroundCellHoverExit(value, monitor.getItem());
     }
   }
 

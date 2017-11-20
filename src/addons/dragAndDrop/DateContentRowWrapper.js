@@ -4,6 +4,8 @@ import React, { Component } from 'react';
 import propEq from 'ramda/src/propEq';
 import findIndex from 'ramda/src/findIndex';
 import splitAt from 'ramda/src/splitAt';
+import path from 'ramda/src/path';
+import filter from 'ramda/src/filter';
 import addDays from 'date-fns/add_days';
 import isSameDay from 'date-fns/is_same_day';
 
@@ -11,8 +13,10 @@ import BigCalendar from '../../index';
 import { withLevels } from '../../utils/eventLevels';
 import reorderLevels from './eventLevels';
 
+const findDayIndex = (range, date) => findIndex(val => isSameDay(date, val))(range);
+
 const calcPosFromDate = (date, range, span) => {
-  const idx = findIndex(val => isSameDay(date, val))(range);
+  const idx = findDayIndex(range, date);
   return { left: idx + 1, right: idx + span, span, level: 0 };
 };
 
@@ -90,49 +94,97 @@ class DateContentRowWrapper extends Component {
     window.RBC_DRAG_POS = null;
   };
 
-  handleBackgroundCellEnter = (value, dragItem) => {
-    console.log('cell enter', value);
+  handleBackgroundCellEnter = (date, dragItem) => {
+    console.log('cell enter', date);
     this.ignoreHoverUpdates = true;
 
-    const drag = window.RBC_DRAG_POS;
-    const { level: dlevel, left: dleft, span: dspan } = drag;
-    const { type, data } = dragItem;
     const { range } = this.props;
     const { levels } = this.state;
+    const { type, data, position } = dragItem;
+    let drag = window.RBC_DRAG_POS;
+    if (!drag && type === 'outsideEvent') {
+      const { id: eventTemplateId, eventTemplateId: id, ...dragDataRest } = data;
+
+      // calculate start and end
+      const newId = cuid();
+      const event = {
+        ...dragDataRest,
+        id: newId,
+        key: newId,
+        eventTemplateId,
+        locked: false,
+        start: date,
+        end: addDays(date, position.span - 1),
+      };
+      drag = {
+        ...calcPosFromDate(date, range, position.span),
+        event,
+      };
+    }
+    //console.log('[0', drag);
+    const { level: dlevel, left: dleft, span: dspan } = drag;
+
+    const { id: did } = data;
+
     if (drag) {
-      if (type === 'outsideEvent') {
-        const idx = findIndex(date => isSameDay(value, date))(range);
-        console.log(range, idx, drag);
+      /*if (type === 'outsideEvent') {
+        const idx = findIndex(date => isSameDay(date, date))(range);
         if (idx + 1 === drag.left) return;
         window.RBC_DRAG_POS = null;
-      } else {
-        // We can't know for certain, at this level, if we are hovering over a
-        // segment. We know we have entered a day cell, but the day cell can
-        // be empty or contain events. However, we may be hovering below or
-        // above the events.
-        const hover = calcPosFromDate(value, range, dspan);
-        const cb = level => level.some(seg => overlaps(hover.left, hover.right)(seg));
-        if (levels.some(cb)) {
-          // TODO: create a 200ms callback to see if hover has been called
-          // if not then go ahead and insert the segment.
-          console.log('inside todo');
-          return;
-        } else {
-          console.log('reorder', drag, hover);
-          const nextLevels = reorderLevels(levels, drag, { ...hover, event: dragItem.data });
-          const { level: hlevel, right: hright } = hover;
-          const _dleft = hlevel !== dlevel ? dleft : hright - (dspan - 1);
-          window.RBC_DRAG_POS = {
-            left: _dleft,
-            right: _dleft + (dspan - 1),
-            span: dspan,
-            level: hlevel,
-          };
-          return this.setState({ levels: nextLevels });
-        }
-        // check if props.levels contains segments in the current day cell
-        // TODO: work on this next
+        // return;
+      }*/
+
+      const nextLeft = findDayIndex(range, date) + 1;
+      const segsInDay = ((right, left) =>
+        levels.reduce((acc, lvl) => {
+          return acc.concat(filter(overlaps(nextLeft, nextLeft))(lvl));
+        }, []))(nextLeft, nextLeft);
+      //console.log('[1', nextLeft, segsInDay);
+      if (segsInDay.length && segsInDay.some(({ event: { id } }) => did === id)) {
+        this.ignoreHoverUpdates = false;
+        return;
       }
+
+      if (type === 'outsideEvent') {
+        drag.level = segsInDay.length;
+      }
+
+      let hover = calcPosFromDate(date, range, dspan);
+      hover.level = segsInDay.length;
+      console.log('day does not contains seg', did);
+      const nextLevels = reorderLevels(levels, drag, { ...hover, event: data });
+      console.log('next lvls', [].concat(nextLevels));
+      const { level: hlevel, right: hright } = hover;
+      const _dleft = hlevel !== dlevel ? nextLeft : hright - (dspan - 1);
+      window.RBC_DRAG_POS = {
+        left: _dleft,
+        right: _dleft + (dspan - 1),
+        span: dspan,
+        level: hlevel,
+      };
+      return this.setState({ levels: nextLevels }, () => {
+        //this.ignoreHoverUpdates = false;
+      });
+
+      // else if (!levels.some(lvl => (lvl.some(({ left }) => (dleft === left))))) {
+      // There are not segments in this day cell
+
+      // We can't know for certain, at this level, if we are hovering over a
+      // segment. We know we have entered a day cell, but the day cell can
+      // be empty or contain events. However, we may be hovering below or
+      // above the events.
+
+      //if (levels.some(cb)) {
+      // TODO: create a 200ms callback to see if hover has been called
+      // if not then go ahead and insert the segment.
+      //  console.log('inside todo');
+      //  return;
+      //} else {
+
+      //}
+      // check if props.levels contains segments in the current day cell
+      // TODO: work on this next
+      // }
     }
 
     /*const drag = window.RBC_DRAG_POS;
@@ -151,7 +203,7 @@ class DateContentRowWrapper extends Component {
     };*/
     console.log('[0');
     //const nextLevels = reorderLevels(levels, drag, hover);
-    const [nextDragPos, nextLevels] = this._insertEvent(value, dragItem);
+    const [nextDragPos, nextLevels] = this._insertEvent(date, dragItem);
 
     window.RBC_DRAG_POS = nextDragPos;
     this.ignoreHoverUpdates = false;
@@ -159,9 +211,22 @@ class DateContentRowWrapper extends Component {
   };
 
   handleBackgroundCellHoverExit = () => {
-    //const props = withLevels(this.props);
     console.log('cell exit');
-    window.RBC_DRAG_POS = null;
+    /*const drag = window.RBC_DRAG_POS;
+    console.log('exit', drag, rest, drest);
+    if (!drag) return;
+    console.log('cell exit');
+    // Inspect currect drag segment and verify we can simply null it
+    const { level, left } = drag;
+    const { levels } = this.state;
+    const { event: { id: eventId }} = levels[level].find(({ left: v }) => (v === left));
+    console.log('exit t', levels[level], eventId, id);
+    if (eventId === id) {
+      //window.RBC_DRAG_POS = null;
+      return;
+    }*/
+
+    //window.RBC_DRAG_POS = null;
   };
 
   _insertEvent = (date, dragItem) => {
@@ -266,7 +331,7 @@ class DateContentRowWrapper extends Component {
     }
 
     if (!drag || this._posEq(drag, hover)) return;
-    console.log(drag, hover);
+    console.log('hover', drag, hover);
     const { level: dlevel, left: dleft, right: dright, span: dspan } = drag;
     const { level: hlevel, left: hleft, right: hright, span: hspan } = hover;
     const { levels } = this.state;
@@ -310,6 +375,8 @@ class DateContentRowWrapper extends Component {
   };
 
   render() {
+    console.log('render');
+    //setTimeout(()=>(this.ignoreHoverUpdates = false), 100);
     const DateContentRowWrapper = BigCalendar.components.dateContentRowWrapper;
     const props = { ...this.props, ...this.state };
     return <DateContentRowWrapper {...props}>{this.props.children}</DateContentRowWrapper>;
