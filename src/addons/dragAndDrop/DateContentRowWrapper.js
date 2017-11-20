@@ -8,6 +8,7 @@ import path from 'ramda/src/path';
 import filter from 'ramda/src/filter';
 import addDays from 'date-fns/add_days';
 import isSameDay from 'date-fns/is_same_day';
+import cuid from 'cuid';
 
 import BigCalendar from '../../index';
 import { withLevels } from '../../utils/eventLevels';
@@ -100,6 +101,8 @@ class DateContentRowWrapper extends Component {
     const { levels } = this.state;
     const { type, data, position } = dragItem;
     let drag = window.RBC_DRAG_POS;
+    if (type === 'resizeL' || type === 'resizeR') return;
+
     if (!drag && type === 'outsideEvent') {
       const { id: eventTemplateId, eventTemplateId: id, ...dragDataRest } = data;
 

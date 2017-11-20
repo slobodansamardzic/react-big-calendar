@@ -21,10 +21,11 @@ let eventSource = {
 };
 
 const eventTarget = {
-  hover(props, monitor, { props: pp, decoratedComponentInstance: component }) {
+  hover(props, monitor, { decoratedComponentInstance: component }) {
     const { onSegmentHover } = component.context;
-    const { event: { position, data } } = props;
-    onSegmentHover(position, data);
+    const { event: hoverEvent } = props;
+    const dragEvent = monitor.getItem();
+    onSegmentHover(hoverEvent, dragEvent);
   },
   drop(_, monitor, { props, decoratedComponentInstance: component }) {
     const { onSegmentDrop } = component.context;
