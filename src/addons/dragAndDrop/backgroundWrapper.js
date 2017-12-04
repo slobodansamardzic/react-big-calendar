@@ -235,6 +235,12 @@ function createWrapper(type) {
         }
       }
     },
+    canDrop(props, monitor) {
+      const { data: event, type: eventType } = monitor.getItem();
+      console.log(eventType);
+      console.log(event);
+      return false;
+    },
   };
 
   return DropTarget(['event', 'resize'], dropTarget, collectTarget)(DraggableBackgroundWrapper);
