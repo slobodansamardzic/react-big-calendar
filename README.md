@@ -1,4 +1,4 @@
-react-big-calendar by bat
+react-big-calendar by bat radi
 ========================
 
 An events calendar component built for React and made for modern browsers (read: IE10+) and uses flexbox over the classic tables-ception approach.
